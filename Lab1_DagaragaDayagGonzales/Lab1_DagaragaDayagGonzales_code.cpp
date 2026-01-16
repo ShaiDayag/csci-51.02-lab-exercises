@@ -24,24 +24,22 @@ using namespace std;
  * @param str the string being shifted
  */
 string letterShiftString(string str){
-    string newStr; // Initializes empty string to store the result
     int strVal; // Stores ASCII value of current character
     for (int i = 0; i < str.length() ; i++){ // Iterating through each character in the input string
         strVal = int(char(str[i])); // Gets the ASCII value of the current character
-
-
-	  // Checks if character is a letter (but not 'Z' or 'z')
+	    // Checks if character is a letter (but not 'Z' or 'z')
         if((strVal >= 65 && strVal < 90 ) || (strVal >= 97 && strVal < 122)){ // 65-89 is 'A'-'Y', 97-121 is 'a'-'y'
-            newStr += char(strVal + 1); // Shifts to the next letter
+            str[i] = char(strVal + 1); // Shifts to the next letter
         }
         // Handles the wrap-around cases: 'Z' -> 'A' and 'z' -> 'a'
-  else if(strVal == 90 || strVal == 122){ // ASCII 90 is 'Z', ASCII 122 is 'z'
-            newStr += char(strVal - 25); // Subtract 25 to wrap from Z to A (90-25=65='A') or z to a (122-25=97='a')
-        }else{
-            newStr += char(str[i]); // Non-letter characters will remain unchanged
+        else if(strVal == 90 || strVal == 122){ // ASCII 90 is 'Z', ASCII 122 is 'z'
+            str[i] = char(strVal - 25); // Subtract 25 to wrap from Z to A (90-25=65='A') or z to a (122-25=97='a')
+        }
+        else{
+            str[i] = char(str[i]); // Non-letter characters will remain unchanged
         }
     }
-    return newStr; // Returns the new, modified string
+    return str; // Returns the new, modified string
 }
 
 
