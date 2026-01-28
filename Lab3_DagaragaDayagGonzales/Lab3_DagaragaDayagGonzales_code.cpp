@@ -17,10 +17,22 @@ If any C++ language code or documentation used in our program was obtained from 
 #include <iostream>
 using namespace std;
 
+/*
+ * struct IntNode holds an integer and a pointer towards another IntNode
+ * It will be used as the components for IntList and IntStack shown below
+ */
+
 struct IntNode {
     int data;
     IntNode* next;
 };
+
+/*
+ * struct IntList is a linked list for integer values only, made by IntNodes.
+ * The head is a pointer to the first IntNode of the IntList, of which points
+ * to another memory address for the next IntNode of the IntList, and so on so
+ * forth.
+ */
 
 struct IntList {
     IntNode* head;
@@ -40,7 +52,6 @@ struct IntList {
     
     // b. Inserting a node after any other node (pass the pointer of the other IntNode to
     // this function; return a pointer to the new IntNode)
-    
     IntNode* insertAfter(IntNode* prevNode, int value) {
         if (prevNode == NULL) {
             return NULL;        // cannot insert after a NULL node, return NULL
@@ -105,7 +116,7 @@ struct IntList {
         head = NULL; // indicates list is empty
     }
     
-    // additional function to display the list
+    // additional function to display the IntList
     void display() {
         IntNode* current = head;
         cout << "List: ";
@@ -117,6 +128,14 @@ struct IntList {
     }
 };
 
+/*
+ * struct IntStack is a stack for integer values only, made through IntNodes.
+ * Also has a count variable to keep track of how many IntNodes are in the IntStack.
+ * To traverse, start from the top, remove the top element via pop, and repeat until
+ * the element to find has been popped. Unless the removed elements have been saved
+ * in some other form, those elements are pretty much deleted.
+ */
+
 struct IntStack {
     IntNode* top;   // pointer to top node; most recently pushed
     int count;      // counter for tracking stack size
@@ -126,7 +145,7 @@ struct IntStack {
         count = 0;
     }
     
-    // PUSH an integer onto the stack
+    // PUSH an integer onto the stack (adds an IntNode)
     void push(int value) {
         IntNode* newNode = new IntNode;
         newNode->data = value;
@@ -135,7 +154,7 @@ struct IntStack {
         count++;                        // increment count
     }
     
-    // POP an integer from the stack
+    // POP an integer from the stack (removes an IntNode and returns its data in the process)
     int pop() {
         if (top == NULL) {      // edge case
             cerr << "Error: Cannot pop from empty stack. Returning 0." << endl;
@@ -155,7 +174,7 @@ struct IntStack {
         return count;
     }
     
-    // using the additional function
+    // additional function to clean up all nodes (for no memory leaks)
     void cleanup() {
         while (top != NULL) {       // loops while stack is NOT empty
             IntNode* temp = top;    // pointer saved to current top
@@ -165,7 +184,7 @@ struct IntStack {
         count = 0;                  // reset the count
     }
     
-    // display stack
+    // additional function to display the IntStack
     void display() {
         IntNode* current = top;             // start from top
         cout << "Stack (top to bottom): ";
@@ -205,7 +224,6 @@ int main() {
     // traversal using getFirst() and getNext()
     cout << "\n5. Traversing the list using getFirst() and getNext():" << endl;
     IntNode* current = list.getFirst();     // gets pointer to first node
-    //cout << "Traversal: ";
     while (current != NULL) {
         cout << current->data << " ";       // print data of current node
         current = list.getNext(current);    // getNext moves to next node
