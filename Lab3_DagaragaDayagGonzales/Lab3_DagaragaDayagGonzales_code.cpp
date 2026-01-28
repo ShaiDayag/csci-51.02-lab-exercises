@@ -35,7 +35,7 @@ struct IntList {
    IntNode* createFirst(int value) {
        IntNode* newNode = new IntNode;
        newNode->data = value;
-       newNode->next = NULL;
+       newNode->next = head;
        head = newNode;
        return newNode;
    }
