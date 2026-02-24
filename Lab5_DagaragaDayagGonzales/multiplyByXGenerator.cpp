@@ -96,9 +96,9 @@ int main(int argc, char *argv[]){
     cout << "	.size	_ZN8IntArray10setElementEii, .-_ZN8IntArray10setElementEii" << endl;
     cout << "	.text" << endl;
     // Interpretation of multiplyByX function
-    cout << "	.globl	_Z11multiplyBy" << x << "P8IntArray" << endl;
-    cout << "	.type	_Z11multiplyBy" << x << "P8IntArray, @function" << endl;
-    cout << "_Z11multiplyBy" << x << "P8IntArray:" << endl;
+    cout << "	.globl	_Z12multiplyBy" << x << "P8IntArray" << endl;
+    cout << "	.type	_Z12multiplyBy" << x << "P8IntArray, @function" << endl;
+    cout << "_Z12multiplyBy" << x << "P8IntArray:" << endl;
     cout << ".LFB24:" << endl;
     cout << "	.cfi_startproc" << endl;
     cout << "	endbr64" << endl;
@@ -120,6 +120,7 @@ int main(int argc, char *argv[]){
     cout << "	movl	%edx, %esi" << endl;
     cout << "	movq	%rax, %rdi" << endl;
     cout << "	call	_ZN8IntArray10getElementEi" << endl;
+    //This area is most likely going to need to change for the sake of optimization
     cout << "	imull	$" << x << ", %eax, %edx" << endl;
     cout << "	movl	-20(%rbp), %eax" << endl;
     cout << "	movl	%eax, %esi" << endl;
@@ -142,7 +143,7 @@ int main(int argc, char *argv[]){
     cout << "	ret" << endl;
     cout << "	.cfi_endproc" << endl;
     cout << ".LFE24:" << endl;
-    cout << "	.size	_Z11multiplyBy" << x << "P8IntArray, .-_Z11multiplyBy" << x << "P8IntArray" << endl;
+    cout << "	.size	_Z12multiplyBy" << x << "P8IntArray, .-_Z12multiplyBy" << x << "P8IntArray" << endl;
     cout << "	.ident	\"GCC: (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0\"" << endl;
     cout << "	.section	.note.GNU-stack,\"\",@progbits" << endl;
     cout << "	.section	.note.gnu.property,\"a\"" << endl;
@@ -160,6 +161,6 @@ int main(int argc, char *argv[]){
     cout << "	.long	0x3" << endl;
     cout << "3:" << endl;
     cout << "	.align 8" << endl;
-    cout << "4:    " << endl;
+    cout << "4:" << endl;
     return 0;
 }
