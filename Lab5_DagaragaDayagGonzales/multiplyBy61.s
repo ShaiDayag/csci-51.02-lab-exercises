@@ -82,9 +82,9 @@ _ZN8IntArray10setElementEii:
 .LFE23:
 	.size	_ZN8IntArray10setElementEii, .-_ZN8IntArray10setElementEii
 	.text
-	.globl	_Z11multiplyBy61P8IntArray
-	.type	_Z11multiplyBy61P8IntArray, @function
-_Z11multiplyBy61P8IntArray:
+	.globl	_Z12multiplyBy61P8IntArray
+	.type	_Z12multiplyBy61P8IntArray, @function
+_Z12multiplyBy61P8IntArray:
 .LFB24:
 	.cfi_startproc
 	endbr64
@@ -128,7 +128,7 @@ _Z11multiplyBy61P8IntArray:
 	ret
 	.cfi_endproc
 .LFE24:
-	.size	_Z11multiplyBy61P8IntArray, .-_Z11multiplyBy61P8IntArray
+	.size	_Z12multiplyBy61P8IntArray, .-_Z12multiplyBy61P8IntArray
 	.ident	"GCC: (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0"
 	.section	.note.GNU-stack,"",@progbits
 	.section	.note.gnu.property,"a"
@@ -146,4 +146,4 @@ _Z11multiplyBy61P8IntArray:
 	.long	0x3
 3:
 	.align 8
-4:    
+4:
