@@ -9,8 +9,6 @@ int main()
     int s, n;
     cout << "size: ";
     cin >> s;
-    cout << "multiplier: ";
-    cin >> n;
     
     // - create a new IntArray with your own elements
     IntArray* array = new IntArray(s);
