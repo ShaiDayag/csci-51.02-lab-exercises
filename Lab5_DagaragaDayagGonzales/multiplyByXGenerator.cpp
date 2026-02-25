@@ -379,10 +379,10 @@ int main(int argc, char *argv[]){
     // cout << "	nop" << endl;                                   // idle
     // cout << "	movq	-8(%rbp), %rbx" << endl;                // ???
     // cout << "	leave" << endl;
-    cout << "   addq    $40, %rsp" << endl;                     // match the subq $40 at the start
-    cout << "   popq    %rbx" << endl;                          // restore rbx
-    cout << "   popq    %rbp" << endl;                          // restore rbp
-    cout << "   ret" << endl;
+    cout << "	addq	$40, %rsp" << endl;                     // match the subq $40 at the start
+    cout << "	popq	%rbx" << endl;                          // restore rbx
+    cout << "	popq	%rbp" << endl;                          // restore rbp
+    cout << "	ret" << endl;
     cout << "	.cfi_def_cfa 7, 8" << endl;
     cout << "	.cfi_endproc" << endl;
 
