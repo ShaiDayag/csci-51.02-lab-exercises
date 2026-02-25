@@ -163,8 +163,7 @@ void evaluate(int x){
     } 
 
     // free up storage
-    order.cleanup();
-    delete currentNode;
+    order.cleanup(); // delete nodes
     currentNode = NULL;
 
     cout << "	movl	$0, %edx" << endl;  // ensures that our product register no longer equals to "i" (as in array index for IntArray's elements, used in function getElement and accessed through such register)
