@@ -6,7 +6,7 @@ extern void multiplyBy61(IntArray *p);
 
 int main()
 {
-    int s, n;
+    int s;
     cout << "size: ";
     cin >> s;
     
