@@ -19,8 +19,8 @@ struct IntArray {
             return size;
         }
 
-        int getElements() {
-            return *elements;
+        int* getElements() {
+            return elements;
         }
 
         int getElement(int index) {
