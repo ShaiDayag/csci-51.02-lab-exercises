@@ -24,7 +24,7 @@ struct IntList {
         head = NULL;
     }
     
-    // a. Creating the first node of a linked list (return a pointer to the created IntNode)
+    //Creating the first node of a linked list (return a pointer to the created IntNode)
     IntNode* createFirst(int value) {
         IntNode* newNode = new IntNode;     // dynamically allocating memory for a new node
         newNode->data = value;              // set the data field to the given value
@@ -33,7 +33,7 @@ struct IntList {
         return newNode;                     // returns pointer to new node
     }
     
-    // b. Inserting a node after any other node (pass the pointer of the other IntNode to
+    // Inserting a node after any other node (pass the pointer of the other IntNode to
     // this function; return a pointer to the new IntNode)
     IntNode* insertAfter(IntNode* prevNode, int value) {
         if (prevNode == NULL) {
@@ -47,45 +47,17 @@ struct IntList {
         return newNode;
     }
     
-    // c. Getting the first node (return a pointer, or NULL if it does not exist)
+    // Getting the first node (return a pointer, or NULL if it does not exist)
     IntNode* getFirst() {
         return head; // this returns pointer to the first node, or NUll if its empty
     }
     
-    // d. Getting the node after any other node (return NULL if it does not exist)
+    // Getting the node after any other node (return NULL if it does not exist)
     IntNode* getNext(IntNode* currentNode) {
         if (currentNode == NULL) {
             return NULL;            // cannot get the next of NULL, returns NULL
         }
         return currentNode->next;   // return pointer to next node
-    }
-    
-    // e. Deleting a node
-    void deleteNode(IntNode* nodeToDelete) {
-        if (nodeToDelete == NULL || head == NULL) {
-            return; // nothing to delete so exit function
-        }
-        
-        // special case: if deleting head, just move head pointer forward
-        if (head == nodeToDelete) {     // check if deleting first node
-            head = head->next;          // move head to next node
-            delete nodeToDelete;        // free memory
-            return;                     // exit func
-        }
-        
-        // find the node before the one to delete
-        IntNode* current = head;        // start from head
-        // we need the previous node to update its 'next' pointer
-        // we need to update the previous node's next pointer to bypass the node we're deleting
-        while (current != NULL && current->next != nodeToDelete) {
-            current = current->next;    // moves to next node to keep searching
-        }
-        
-        // if found, delete the node
-        if (current != NULL) {                  // checks to find if we found the previous node
-            current->next = nodeToDelete->next; // bypass node to delete
-            delete nodeToDelete;                // free memory of deleted node
-        }
     }
     
     // additional function to clean up all nodes (for no memory leaks)
@@ -102,9 +74,9 @@ struct IntList {
     // additional function to display the IntList
     void display() {
         IntNode* current = head;
-        cout << "List: ";
+        cout << "Binary of inputed number's absolute value in reverse: ";
         while (current != NULL) {
-            cout << current->data << " ";   // print data of current node
+            cout << current->data;   // print data of current node
             current = current->next;
         }
         cout << endl;   // prints new line
@@ -112,76 +84,143 @@ struct IntList {
 };
 
 /*
- * Based on Russian Peasant Algorithm
+ * Helper function allOnesLeft returns whether the rest of
+ * the bits after a certain bit are all ones.
+ */
+
+bool allOnesLeft(int currentLocation, bool* binaryForm, int bitCount){
+    for(int j = currentLocation+1; j < bitCount; j++){
+        // if not a one, then stop checking, because it is not all ones left
+        if(!binaryForm[j]){
+            return false;
+        }
+    }
+    // if all bits after current bit are ones, then it is in fact all ones left
+    return true;
+}
+
+/*
+ * Helper function reshiftEAX decides whether it is still
+ * necessary to right shift %eax back to what it was before
+ * the left shifts
+ */
+
+void reshiftEAX(int currentLocation, bool* binaryForm, int highestPower, int bitCount){
+    for(int j = currentLocation+1; j < bitCount; j++){
+        // if there exists a one that remains after this bit, then right shift %eax as many times as it was left shifted
+        if(binaryForm[j]){
+            cout << "	sarl	$" << highestPower-currentLocation << ", %eax" << endl;
+            break;
+        }
+    }
+    // if not, then no need to right shift. 
+    // It's all zeros left, so the absolute value of the multiplier
+    // has already been reached via sum, and %eax will have its contents
+    // replaced to store a different variable to be used by setElement
+}
+
+/**
+ * Based on Russian Peasant Algorithm, function evaluate prints out 
+ * the necessary instructions to multiply an element by almost any 
+ * integer multiplier (limit depends on the hardware).
+ *
+ * @param x serves as the integer multiplier that will affect the
+ * outputed multiplication instructions.
  */
 
 void evaluate(int x){
+    // Initializes up the relevant variables
     bool isNegative = false;
     int remaining = x;
     if (remaining < 0){
         remaining = -remaining;
         isNegative = true;
     }
-    int count = 0;
-    IntList order;
+    int bitCount = 0;   // how many bits needed to form x in binary
+    IntList order;      // will serve as a temporary dynamic linked list of 1s or 0s
+    order.init();       // empty IntList initialized
     IntNode* currentNode;
-    order.init();
 
+    cout << endl;
+    // Applying Russian's Peasant Algorithm to generate binary form of x
     while(remaining != 0){
-        //cout << "Remaining: " << remaining;
+        cout << "Remaining: " << remaining;
         if(remaining % 2 == 0){
-            //cout << " CROSS OUT" << endl;
+            cout << " r0" << endl;
             if(order.head == NULL){
                 currentNode = order.createFirst(0);
             }else{
                 currentNode = order.insertAfter(currentNode, 0);
             }
         }else{
+            cout << " r1" << endl;
             if(order.head == NULL){
                 currentNode = order.createFirst(1);
             }else{
                 currentNode = order.insertAfter(currentNode, 1);
             }
-            //cout << endl;
         }
         remaining = remaining / 2;
-        count++;
+        bitCount++; // counts how many bits were involved
     }
-    int highestPower = count-1;
-    //cout << "Highest power for 2 applicable is: " << highestPower << endl;
-    //order.display();
-    bool binaryForm[count];
+    int highestPower = bitCount-1;  // highest power of two involved in reaching sum x with powers of 2 only
+    cout << endl << "Highest power for 2 applicable (for inputed number's absolute value) is: " << (highestPower < 0 ? 0 : highestPower) << endl;
+    order.display();
+    bool binaryForm[bitCount];
     currentNode = order.getFirst();
 
+    // reverses the order of bits and sends the result to a bool array to get proper binary form of x
+    // true = 1, false = 0
     for(int i = highestPower; i >= 0; i--){
         binaryForm[i] = (currentNode->data == 1 ? true : false);
         currentNode = order.getNext(currentNode);
-    }
+    } 
+
+    // free up storage
     order.cleanup();
     delete currentNode;
     currentNode = NULL;
 
-    //cout << "Binary form of inputed number: ";
-    //for(bool i : binaryForm){ cout << (i ? 1 : 0);}
+    cout << "Binary form of the inputed number's absolute value: ";
+    for(bool i : binaryForm){ cout << (i ? 1 : 0);}
 
-    cout << "	movl	$0, %edx" << endl;
-    for(int i = 0; i < count; i++){
+    cout << endl << endl << "Multiplication Instructions:" << endl;
+
+    cout << "	movl	$0, %edx" << endl; // ensures that our product register no longer equals to "i" as in array index for IntArray's elements
+    bool all_ones_after = false; // a special boolean that can allow a shortcut for the multiplication procedure when applicable
+
+    for(int i = 0; i < bitCount; i++){
+        // if bit is 1
         if(binaryForm[i]){
-            if(i == count-1){
+            if(i == bitCount-1){
                 cout << "	addl	%eax, %edx" << endl;
             }else{
-                cout << "	sall	$" << highestPower-i << ", %eax" << endl;
-                cout << "	addl	%eax, %edx" << endl;
-                for(int j = i+1; j < count; j++){
-                    if(binaryForm[j]){
-                        cout << "	sarl	$" << highestPower-i << ", %eax" << endl;
-                        break;
-                    }
+                // checks if the rest of the bits are ones
+                all_ones_after = allOnesLeft(i, binaryForm, bitCount);
+                // if above if such, then utilize a shorter version for calculating the product from this point, then end the instruction generator
+
+                if (all_ones_after){                                                
+                                                                                    // Example: x = 23, binary form is 10111. i is 2
+                    cout << "	sall	$" << highestPower-i+1 << ", %eax" << endl; // 4-2-1 = 3. %eax = 8x
+                    cout << "	addl	%eax, %edx" << endl;                        // %edx = 16x + 8x = 24x
+                    cout << "	sarl	$" << highestPower-i+1 << ", %eax" << endl; // %eax = 8x/8 = x
+                    cout << "	subl	%eax, %edx" << endl;                        // %edx = 24x - x = 23x
+                    break;                                                          // Since we technically traversed through the rest of the bits, consider this part of the function finished
+
+                }else{ // if not, then shift %eax and add the result to the product register %edx as intended
+                    cout << "	sall	$" << highestPower-i << ", %eax" << endl;   // Left shift %eax by the appropriate amount
+                    cout << "	addl	%eax, %edx" << endl;                        // Add %eax and %edx, with the sum stored at %edx 
+                    reshiftEAX(i, binaryForm, highestPower, bitCount);              // if the rest of the bits are not 0, then right shift %eax back to what it was before the left shifts.
                 }
             }
         }
     }
+    // if the supplied multiplier is negative, include the instruction within
+    if (isNegative){
+        cout << "	negl	%edx" << endl;
+    }
 }
+
 // 10 = 1*8 + 0*4 + 1*2 + 0*1
 // 11 = 1*8 + 0*4 + 1*2 + 1*1
 int main(void){

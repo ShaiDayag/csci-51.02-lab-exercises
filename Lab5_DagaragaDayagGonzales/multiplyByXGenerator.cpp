@@ -27,7 +27,7 @@ struct IntList {
         head = NULL;
     }
     
-    // a. Creating the first node of a linked list (return a pointer to the created IntNode)
+    //Creating the first node of a linked list (return a pointer to the created IntNode)
     IntNode* createFirst(int value) {
         IntNode* newNode = new IntNode;     // dynamically allocating memory for a new node
         newNode->data = value;              // set the data field to the given value
@@ -36,7 +36,7 @@ struct IntList {
         return newNode;                     // returns pointer to new node
     }
     
-    // b. Inserting a node after any other node (pass the pointer of the other IntNode to
+    // Inserting a node after any other node (pass the pointer of the other IntNode to
     // this function; return a pointer to the new IntNode)
     IntNode* insertAfter(IntNode* prevNode, int value) {
         if (prevNode == NULL) {
@@ -50,18 +50,19 @@ struct IntList {
         return newNode;
     }
     
-    // c. Getting the first node (return a pointer, or NULL if it does not exist)
+    // Getting the first node (return a pointer, or NULL if it does not exist)
     IntNode* getFirst() {
         return head; // this returns pointer to the first node, or NUll if its empty
     }
     
-    // d. Getting the node after any other node (return NULL if it does not exist)
+    // Getting the node after any other node (return NULL if it does not exist)
     IntNode* getNext(IntNode* currentNode) {
         if (currentNode == NULL) {
             return NULL;            // cannot get the next of NULL, returns NULL
         }
         return currentNode->next;   // return pointer to next node
     }
+    
     // additional function to clean up all nodes (for no memory leaks)
     void cleanup() {
         IntNode* current = head;            // start from head
@@ -75,25 +76,66 @@ struct IntList {
 };
 
 /*
- * Based on Russian Peasant Algorithm
+ * Helper function allOnesLeft returns whether the rest of
+ * the bits after a certain bit are all ones.
+ */
+
+bool allOnesLeft(int currentLocation, bool* binaryForm, int bitCount){
+    for(int j = currentLocation+1; j < bitCount; j++){
+        // if not a one, then stop checking, because it is not all ones left
+        if(!binaryForm[j]){
+            return false;
+        }
+    }
+    // if all bits after current bit are ones, then it is in fact all ones left
+    return true;
+}
+
+/*
+ * Helper function reshiftEAX decides whether it is still
+ * necessary to right shift %eax back to what it was before
+ * the left shifts
+ */
+
+void reshiftEAX(int currentLocation, bool* binaryForm, int highestPower, int bitCount){
+    for(int j = currentLocation+1; j < bitCount; j++){
+        // if there exists a one that remains after this bit, then right shift %eax as many times as it was left shifted
+        if(binaryForm[j]){
+            cout << "	sarl	$" << highestPower-currentLocation << ", %eax" << endl;
+            break;
+        }
+    }
+    // if not, then no need to right shift. 
+    // It's all zeros left, so the absolute value of the multiplier
+    // has already been reached via sum, and %eax will have its contents
+    // replaced to store a different variable to be used by setElement
+}
+
+/**
+ * Based on Russian Peasant Algorithm, function evaluate prints out 
+ * the necessary instructions to multiply an element by almost any 
+ * integer multiplier (limit depends on the hardware).
+ *
+ * @param x serves as the integer multiplier that will affect the
+ * outputed multiplication instructions.
  */
 
 void evaluate(int x){
+    // Initializes up the relevant variables
     bool isNegative = false;
     int remaining = x;
     if (remaining < 0){
         remaining = -remaining;
         isNegative = true;
     }
-    int count = 0;
-    IntList order;
+    int bitCount = 0;   // how many bits needed to form x in binary
+    IntList order;      // will serve as a temporary dynamic linked list of 1s or 0s
+    order.init();       // empty IntList initialized
     IntNode* currentNode;
-    order.init();
 
+    // Applying Russian's Peasant Algorithm to generate binary form of x
     while(remaining != 0){
-        //cout << "Remaining: " << remaining;
         if(remaining % 2 == 0){
-            //cout << " CROSS OUT" << endl;
             if(order.head == NULL){
                 currentNode = order.createFirst(0);
             }else{
@@ -105,44 +147,59 @@ void evaluate(int x){
             }else{
                 currentNode = order.insertAfter(currentNode, 1);
             }
-            //cout << endl;
         }
         remaining = remaining / 2;
-        count++;
+        bitCount++; // adds to the count on how many bits were involved
     }
-    int highestPower = count-1;
-    //cout << "Highest power for 2 applicable is: " << highestPower << endl;
-    //order.display();
-    bool binaryForm[count];
+    int highestPower = bitCount-1;  // highest power of two involved in reaching sum x with powers of 2 only
+    bool binaryForm[bitCount];
     currentNode = order.getFirst();
 
+    // reverses the order of bits and sends the result to a bool array to get proper binary form of x
+    // true = 1, false = 0
     for(int i = highestPower; i >= 0; i--){
         binaryForm[i] = (currentNode->data == 1 ? true : false);
         currentNode = order.getNext(currentNode);
-    }
+    } 
+
+    // free up storage
     order.cleanup();
     delete currentNode;
     currentNode = NULL;
 
-    //cout << "Binary form of inputed number: ";
-    //for(bool i : binaryForm){ cout << (i ? 1 : 0);}
+    cout << "	movl	$0, %edx" << endl;  // ensures that our product register no longer equals to "i" (as in array index for IntArray's elements, used in function getElement and accessed through such register)
+    bool all_ones_after = false;            // a special boolean that can allow a shortcut for the multiplication procedure when applicable
 
-    cout << "	movl	$0, %edx" << endl;
-    for(int i = 0; i < count; i++){
+    for(int i = 0; i < bitCount; i++){
+        // if bit is 1
         if(binaryForm[i]){
-            if(i == count-1){
+            if(i == bitCount-1){
                 cout << "	addl	%eax, %edx" << endl;
             }else{
-                cout << "	sall	$" << highestPower-i << ", %eax" << endl;
-                cout << "	addl	%eax, %edx" << endl;
-                for(int j = i+1; j < count; j++){
-                    if(binaryForm[j]){
-                        cout << "	sarl	$" << highestPower-i << ", %eax" << endl;
-                        break;
-                    }
+                // checks if the rest of the bits are ones
+                all_ones_after = allOnesLeft(i, binaryForm, bitCount);
+                // if above if such, then utilize a shorter version for calculating the product from this point, then end the instruction generator
+
+                if (all_ones_after){                                                
+                                                                                    // Example: x = 23, binary form is 10111. i is 2
+                    cout << "	sall	$" << highestPower-i+1 << ", %eax" << endl; // 4-2-1 = 3. %eax = 8x
+                    cout << "	addl	%eax, %edx" << endl;                        // %edx = 16x + 8x = 24x
+                    cout << "	sarl	$" << highestPower-i+1 << ", %eax" << endl; // %eax = 8x/8 = x
+                    cout << "	subl	%eax, %edx" << endl;                        // %edx = 24x - x = 23x
+                    break;                                                          // Since we technically traversed through the rest of the bits, consider this part of the function finished
+
+                }else{ // if not, then shift %eax and add the result to the product register %edx as intended
+                    cout << "	sall	$" << highestPower-i << ", %eax" << endl;   // Left shift %eax by the appropriate amount
+                    cout << "	addl	%eax, %edx" << endl;                        // Add %eax and %edx, with the sum stored at %edx 
+                    reshiftEAX(i, binaryForm, highestPower, bitCount);              // if the rest of the bits are not 0, then right shift %eax back to what it was before the left shifts.
                 }
             }
         }
+    }
+
+    // if the supplied multiplier is negative, include the instruction within
+    if (isNegative){
+        cout << "	negl	%edx" << endl;
     }
 }
 
@@ -150,6 +207,7 @@ int main(int argc, char *argv[]){
     int x = atoi(argv[1]);
     cout << "	.file	\"multiplyBy" << x << ".cpp\"" << endl;
     cout << "	.text" << endl;
+    
     // Interpretation of IntArray's getSize function (the registers used here are important when this function is called by multiplyByX)
     cout << "	.section	.text._ZN8IntArray7getSizeEv,\"axG\",@progbits,_ZN8IntArray7getSizeEv,comdat" << endl;
     cout << "	.align 2" << endl;
@@ -173,6 +231,7 @@ int main(int argc, char *argv[]){
     cout << "	.cfi_endproc" << endl;
     cout << ".LFE20:" << endl;
     cout << "	.size	_ZN8IntArray7getSizeEv, .-_ZN8IntArray7getSizeEv" << endl;
+    
     // Interpretation of IntArray's getElement function (the registers used here are important when this function is called by multiplyByX)
     cout << "	.section	.text._ZN8IntArray10getElementEi,\"axG\",@progbits,_ZN8IntArray10getElementEi,comdat" << endl;
     cout << "	.align 2" << endl;
@@ -202,6 +261,7 @@ int main(int argc, char *argv[]){
     cout << "	.cfi_endproc" << endl;
     cout << ".LFE22:" << endl;
     cout << "	.size	_ZN8IntArray10getElementEi, .-_ZN8IntArray10getElementEi" << endl;
+    
     // Interpretation of IntArray's setElement function (the registers used here are important when this function is called by multiplyByX)
     cout << "	.section	.text._ZN8IntArray10setElementEii,\"axG\",@progbits,_ZN8IntArray10setElementEii,comdat" << endl;
     cout << "	.align 2" << endl;
@@ -235,6 +295,7 @@ int main(int argc, char *argv[]){
     cout << ".LFE23:" << endl;
     cout << "	.size	_ZN8IntArray10setElementEii, .-_ZN8IntArray10setElementEii" << endl;
     cout << "	.text" << endl;
+
     // Interpretation of multiplyByX function
     cout << "	.globl	_Z12multiplyBy" << x << "P8IntArray" << endl;
     cout << "	.type	_Z12multiplyBy" << x << "P8IntArray, @function" << endl;
@@ -261,9 +322,9 @@ int main(int argc, char *argv[]){
     cout << "	movq	%rax, %rdi" << endl;                    // send IntArray to %rdi
     cout << "	call	_ZN8IntArray10getElementEi" << endl;    // refer to getElement function call
 
-    //This area is most likely going to need to change for the sake of optimization
-    evaluate(x);      // chosen element (currently in %eax) multiplied by x, stored in %edx [this part is what we need to change]
-    // right now, %eax holds our element, %edx initially still holds the value of i. At the end, %edx must hold our product.
+                                                                // chosen element (currently in %eax) multiplied by x, stored in %edx [this part is what we need to change]
+    evaluate(x);                                                // before running evaluate %eax holds our element and %edx initially still holds the value of i. 
+                                                                // After running evaluate, %edx holds the product.
 
     cout << "	movl	-20(%rbp), %eax" << endl;               // send current value of i to %eax
     cout << "	movl	%eax, %esi" << endl;                    // send current value of i to %esi
@@ -285,6 +346,8 @@ int main(int argc, char *argv[]){
     cout << "	.cfi_def_cfa 7, 8" << endl;
     cout << "	ret" << endl;
     cout << "	.cfi_endproc" << endl;
+
+    // Additional info that's probably relevant to the s file
     cout << ".LFE24:" << endl;
     cout << "	.size	_Z12multiplyBy" << x << "P8IntArray, .-_Z12multiplyBy" << x << "P8IntArray" << endl;
     cout << "	.ident	\"GCC: (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0\"" << endl;
