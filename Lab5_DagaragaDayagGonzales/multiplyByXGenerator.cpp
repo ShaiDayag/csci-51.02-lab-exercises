@@ -1,3 +1,18 @@
+/*
+Pete Justin Dagaraga (231874)
+Shaan Graal Dayag (231928)
+Robynne Alexa Gonzales (232944)
+
+February 26, 2026
+*/
+
+
+/*
+We have not discussed the C++/Assembly language code in our program with anyone other than our instructor or the teaching assistants assigned to this course.
+We have not used C++/Assembly language code obtained from another student, or any other unauthorized source, either modified or unmodified.
+If any C++/Assembly language code or documentation used in our program was obtained from another source, such as a textbook or course notes, that has been clearly noted with a proper citation in the comments of our program.
+*/
+
 #include "IntArray.h"
 #include <iostream>
 #include <stdlib.h>
@@ -112,15 +127,18 @@ void reshiftEAX(int currentLocation, bool* binaryForm, int highestPower, int bit
 }
 
 /**
- * Based on Russian Peasant Algorithm, function evaluate prints out 
+ * Based on Russian Peasant Algorithm, function "mulInstructions" prints out 
  * the necessary instructions to multiply an element by almost any 
  * integer multiplier (limit depends on the hardware).
+ *
+ * Refer to link for source on understanding:
+ * https://www.themathdoctors.org/russian-peasant-multiplication-how-and-why/
  *
  * @param x serves as the integer multiplier that will affect the
  * outputed multiplication instructions.
  */
 
-void evaluate(int x){
+void mulInstructions(int x){
     // Initializes up the relevant variables
     bool isNegative = false;
     int remaining = x;
@@ -163,7 +181,8 @@ void evaluate(int x){
     } 
 
     // free up storage
-    order.cleanup(); // delete nodes
+    order.cleanup();
+    delete currentNode;
     currentNode = NULL;
 
     cout << "	movl	$0, %edx" << endl;  // ensures that our product register no longer equals to "i" (as in array index for IntArray's elements, used in function getElement and accessed through such register)
@@ -202,8 +221,26 @@ void evaluate(int x){
     }
 }
 
+/*
+ * main function. Based on the IntArray.h and the s file of multiplyBy61.cpp (of
+ * which is not included in this submission, as per agreed terms. Think of it as 
+ * multiplyByX but fixed with 61 as multiplier, which led to a different s file than
+ * the X version), the output generated can be sent to an empty s file, of which can 
+ * be included when compiling cpp files that have an external function that is of the 
+ * multiplyBy variety (in this case, the cpp file is multiplyBy61Tester.cpp).
+ *
+ * Input is collected via the command line. Must be an integer, otherwise it would 
+ * likely treat the input as 0, or something that would mess up the execution/output
+ * of the program.
+ *
+ * (Important sections include "getSize", "getElement", "setElement", and "multiplyByX".
+ * For easier navigation, you can attempt a find word and use the above words without
+ * the quotes, if your text editor allows it.) 
+ */
+
 int main(int argc, char *argv[]){
-    int x = atoi(argv[1]);
+    int x = atoi(argv[1]);                                  // turns string input into its intended integer form
+
     cout << "	.file	\"multiplyBy" << x << ".cpp\"" << endl;
     cout << "	.text" << endl;
     
@@ -321,9 +358,9 @@ int main(int argc, char *argv[]){
     cout << "	movq	%rax, %rdi" << endl;                    // send IntArray to %rdi
     cout << "	call	_ZN8IntArray10getElementEi" << endl;    // refer to getElement function call
 
-                                                                // chosen element (currently in %eax) multiplied by x, stored in %edx [this part is what we need to change]
-    evaluate(x);                                                // before running evaluate %eax holds our element and %edx initially still holds the value of i. 
-                                                                // After running evaluate, %edx holds the product.
+                                                                // initially, used imull, where chosen element (currently in %eax) is multiplied by $x, with the product stored in %edx
+    mulInstructions(x);                                         // before running this function %eax holds our element and %edx initially still holds the value of i. 
+                                                                // After running this function, %edx now holds the product. %eax may or may not be a multiple of the chosen element to be multiplied
 
     cout << "	movl	-20(%rbp), %eax" << endl;               // send current value of i to %eax
     cout << "	movl	%eax, %esi" << endl;                    // send current value of i to %esi
@@ -338,15 +375,12 @@ int main(int argc, char *argv[]){
     cout << "	setl	%al" << endl;                           // results of the comparison are stored in %al
     cout << "	testb	%al, %al" << endl;                      // Confirms if %al is 1 or 0 via %al AND %al
     cout << "	jne	.L8" << endl;                               // If %al is not equal to 0, then %al is 1 and that means i < size, which leads us to jump to L8. Otherwise, this function is basically done
-    // cout << "	nop" << endl;                                   // idle
-    // cout << "	nop" << endl;                                   // idle
-    // cout << "	movq	-8(%rbp), %rbx" << endl;                // ???
-    // cout << "	leave" << endl;
-    cout << "   addq    $40, %rsp" << endl;                     // match the subq $40 at the start
-    cout << "   popq    %rbx" << endl;                          // restore rbx
-    cout << "   popq    %rbp" << endl;                          // restore rbp
-    cout << "   ret" << endl;
+    cout << "	nop" << endl;                                   // idle
+    cout << "	nop" << endl;                                   // idle
+    cout << "	movq	-8(%rbp), %rbx" << endl;                // ???
+    cout << "	leave" << endl;
     cout << "	.cfi_def_cfa 7, 8" << endl;
+    cout << "	ret" << endl;
     cout << "	.cfi_endproc" << endl;
 
     // Additional info that's probably relevant to the s file

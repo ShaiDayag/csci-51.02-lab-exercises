@@ -23,7 +23,7 @@ _Z11multiplyByXP8IntArrayi:
 	.cfi_endproc
 .LFE24:
 	.size	_Z11multiplyByXP8IntArrayi, .-_Z11multiplyByXP8IntArrayi
-	.ident	"GCC: (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+	.ident	"GCC: (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0"
 	.section	.note.GNU-stack,"",@progbits
 	.section	.note.gnu.property,"a"
 	.align 8

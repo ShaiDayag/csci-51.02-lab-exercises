@@ -106,7 +106,20 @@ _Z12multiplyBy61P8IntArray:
 	movl	%edx, %esi
 	movq	%rax, %rdi
 	call	_ZN8IntArray10getElementEi
-	imull	$61, %eax, %edx
+	movl	$0, %edx
+	sall	$5, %eax
+	addl	%eax, %edx
+	sarl	$5, %eax
+	sall	$4, %eax
+	addl	%eax, %edx
+	sarl	$4, %eax
+	sall	$3, %eax
+	addl	%eax, %edx
+	sarl	$3, %eax
+	sall	$2, %eax
+	addl	%eax, %edx
+	sarl	$2, %eax
+	addl	%eax, %edx
 	movl	-20(%rbp), %eax
 	movl	%eax, %esi
 	movq	%rbx, %rdi
