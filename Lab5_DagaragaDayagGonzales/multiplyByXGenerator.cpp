@@ -375,10 +375,6 @@ int main(int argc, char *argv[]){
     cout << "	setl	%al" << endl;                           // results of the comparison are stored in %al
     cout << "	testb	%al, %al" << endl;                      // Confirms if %al is 1 or 0 via %al AND %al
     cout << "	jne	.L8" << endl;                               // If %al is not equal to 0, then %al is 1 and that means i < size, which leads us to jump to L8. Otherwise, this function is basically done
-    // cout << "	nop" << endl;                                   // idle
-    // cout << "	nop" << endl;                                   // idle
-    // cout << "	movq	-8(%rbp), %rbx" << endl;                // ???
-    // cout << "	leave" << endl;
     cout << "	addq	$40, %rsp" << endl;                     // match the subq $40 at the start
     cout << "	popq	%rbx" << endl;                          // restore rbx
     cout << "	popq	%rbp" << endl;                          // restore rbp
