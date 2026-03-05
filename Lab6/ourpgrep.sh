@@ -24,4 +24,4 @@ then
     exit 1
 fi
 
-ps aux | grep ^$USER | grep $pattern | grep -v grep | grep -v ourpgrep.sh | tr -s ' ' | cut -d' ' -f2
+ps aux | grep ^$USER | grep $pattern | grep -v grep | grep -v ourpgrep.sh | grep -v ourpkill.sh | tr -s ' ' | cut -d' ' -f2
