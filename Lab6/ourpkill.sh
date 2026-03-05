@@ -34,7 +34,7 @@ else
     pattern=$1
 fi
 
-# call ourpgrep.sh and redirect to a temp file (Slide 8)
+# call ourpgrep.sh and redirect to a temp file
 ./ourpgrep.sh $pattern > .tmp_pids
 
 # loop through the PIDs
