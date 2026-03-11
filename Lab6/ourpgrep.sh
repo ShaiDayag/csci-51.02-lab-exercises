@@ -16,12 +16,12 @@
 
 #!/bin/bash
 
-pattern=$1
+pattern="$1"
 
-if [ -z $pattern ]
+if [ -z "$pattern" ]
 then
     echo "Error: Provide process name - ./ourpgrep.sh [process]"
     exit 1
 fi
 
-ps aux | grep "^${USER:0:7}" | grep $pattern | grep -v grep | grep -v "ourpgrep.sh" | grep -v "ourpkill.sh" | tr -s ' ' | cut -d ' ' -f2
+ps aux | grep "^${USER:0:7}" | grep "$pattern" | grep -v grep | grep -v "ourpgrep.sh" | grep -v "ourpkill.sh" | tr -s ' ' | cut -d ' ' -f2

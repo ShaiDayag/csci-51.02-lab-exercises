@@ -15,33 +15,66 @@
 
 #!/bin/bash
 
-if [ -z "$*" ]
+# if [ -z "$*" ]
+# then
+#     echo "Error: Provide process name - ./ourpgrep.sh [pattern]"
+#     exit 1
+# fi
+
+# # check for the signal
+# first_char=$(echo $1 | cut -c1)
+
+# if [ "$first_char" == "-" ]
+# then
+#     signal=$1
+#     pattern=$2
+# else
+#     # default signal
+#     signal="-15"
+#     pattern=$1
+# fi
+
+# # call ourpgrep.sh and redirect to a temp file
+# ./ourpgrep.sh $pattern > .tmp_pids
+
+# # loop through the PIDs
+# for id in $(cat .tmp_pids)
+# do
+#     # redirecting to /dev/null makes it output nothing
+#     kill $signal $id > /dev/null 2>&1
+# done
+
+# rm .tmp_pids
+first_char="$1"
+if [ -z "$first_char" ]
 then
-    echo "Error: Provide process name - ./ourpgrep.sh [pattern]"
+    echo "Error: Provide process name (required) and signal (optional) - ./ourpkill.sh [-signal] [process]"
     exit 1
 fi
 
-# check for the signal
-first_char=$(echo $1 | cut -c1)
-
-if [ "$first_char" = "-" ]
+if [ "$first_char" = "-*" ]
 then
-    signal=$1
-    pattern=$2
+    signal="$1"
+    pattern="$2"
+    if [ -z "$pattern" ]
+    then
+        echo echo "Error: Provide process name (required) - ./ourpkill.sh [-signal] [process]"
+        exit 1
+    fi
 else
-    # default signal
+# default signal
     signal="-15"
-    pattern=$1
+    pattern="$1"
 fi
 
-# call ourpgrep.sh and redirect to a temp file
-./ourpgrep.sh $pattern > .tmp_pids
+pids=$(./ourpgrep.sh "$pattern")
 
-# loop through the PIDs
-for id in $(cat .tmp_pids)
+if [ -z "$pids" ]
+then
+    exit 0
+fi
+
+for id in $pids
 do
-    # redirecting to /dev/null makes it output nothing
-    kill $signal $id > /dev/null 2>&1
+    kill "$signal" "$id" > /dev/null 2>&1
 done
-
-rm .tmp_pids
