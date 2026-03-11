@@ -1,27 +1,24 @@
-# 1. ourpgrep.sh shall accept only one argument: a name pattern that will be used to
-# match the name of the processes you want to list.
+# Pete Justin Dagaraga (231874)
+# Shaan Graal Dayag (231928)
+# Robynne Alexa Gonzales (232944)
 
-# 2. Your script should find the processes that match the pattern and belong to the current
-# user. (There is an environment variable that denotes the current user name.)
+# March 11, 2026
 
-# 3. You are required to use the output of the ps aux command to find the relevant
-# processes. You may not modify this command (but you may redirect its output to a file or
-# another program). Note that this command lists all processes by all users, so you will
-# also have to filter the list by the current user name.
-
-# 4. If there are no errors, only the matching PIDs should be reported in standard output, just
-# as with pgrep. (But if there are errors, you should report them.)
-
-# _______________________________________________________________________________________________
+# We have not discussed the bash language code in our program with anyone other than our instructor or the teaching assistants assigned to this course.
+# We have not used bash language code obtained from another student, or any other unauthorized source, either modified or unmodified.
+# If any bash language code or documentation used in our program was obtained from another source, such as a textbook or course notes, that has been clearly noted with a proper citation in the comments of our program.
 
 #!/bin/bash
 
+# Holds our pattern
 pattern=$1
 
+# Checks if pattern is nothing. If so, echo the error
 if [ -z $pattern ]
 then
-    echo "Error: Provide process name - ./ourpgrep.sh [process]"
+    echo "Error: Provide process name - ./ourpgrep.sh [pattern]"
     exit 1
 fi
 
-ps aux | grep "^${USER:0:7}" | grep $pattern | grep -v grep | grep -v "ourpgrep.sh" | grep -v "ourpkill.sh" | tr -s ' ' | cut -d ' ' -f2
+# Out of all active user processes, return the PIDs of the processes that match the pattern
+ps aux | grep ^$USER | grep $pattern | grep -v grep | grep -v "ourpgrep.sh" | grep -v "ourpkill.sh" | tr -s ' ' | cut -d ' ' -f2

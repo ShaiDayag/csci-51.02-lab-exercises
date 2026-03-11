@@ -1,27 +1,23 @@
-# 1. Internally, your script is required to implement the functionality by calling the default Unix
-# kill command and your own ourpgrep.sh script.
+# Pete Justin Dagaraga (231874)
+# Shaan Graal Dayag (231928)
+# Robynne Alexa Gonzales (232944)
 
-# 2. ourpgrep.sh shall accept one optional argument and one required argument:
-    # a. Optional argument: a signal number to pass on to the processes to kill, preceded
-    # with the dash character ‘-'. Example: -9 to send the SIGKILL (force-kill) signal. If
-    # this is not specified, the default signal is -15 (or SIGTERM).
+# March 11, 2026
 
-    # b. Required argument: a name pattern to pass to ourpgrep.sh.
-
-# 3. The script itself should not output anything unless there was an error (just send the
-# signal to the process(es) quietly).
-
-# _______________________________________________________________________________________________
+# We have not discussed the bash language code in our program with anyone other than our instructor or the teaching assistants assigned to this course.
+# We have not used bash language code obtained from another student, or any other unauthorized source, either modified or unmodified.
+# If any bash language code or documentation used in our program was obtained from another source, such as a textbook or course notes, that has been clearly noted with a proper citation in the comments of our program.
 
 #!/bin/bash
 
+# Checks if there are no passed arguments. If so, echo the error
 if [ -z "$*" ]
 then
     echo "Error: Provide process name - ./ourpgrep.sh [pattern]"
     exit 1
 fi
 
-# check for the signal
+# Check for the signal
 first_char=$(echo $1 | cut -c1)
 
 if [ "$first_char" = "-" ]
@@ -34,13 +30,13 @@ else
     pattern=$1
 fi
 
-# call ourpgrep.sh and redirect to a temp file
+# Call ourpgrep.sh and redirect to a temp file
 ./ourpgrep.sh $pattern > .tmp_pids
 
-# loop through the PIDs
+# Loop through the PIDs
 for id in $(cat .tmp_pids)
 do
-    # redirecting to /dev/null makes it output nothing
+    # Redirecting to /dev/null makes it output nothing
     kill $signal $id > /dev/null 2>&1
 done
 
