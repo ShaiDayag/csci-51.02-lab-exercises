@@ -45,6 +45,11 @@ void *monte_carlo_pi_calc(void* ptr) {
     
     // Random generator code
     // Each thread gets its own seeded generator
+
+    // Sources:
+    // https://en.cppreference.com/w/cpp/numeric/random
+    // https://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
+    
     std::random_device rd;
     std::default_random_engine generator(rd());
     std::uniform_real_distribution<long double> distribution(-1.0L, 1.0L);
