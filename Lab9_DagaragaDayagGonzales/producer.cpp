@@ -1,3 +1,24 @@
+/*
+Pete Justin Dagaraga (231874)
+Shaan Graal Dayag (231928)
+Robynne Alexa Gonzales (232944)
+
+April 27, 2026
+*/
+
+/*
+We have not discussed the C++ language code and Bash scripting in our program with anyone other than our instructor or the teaching assistants assigned to this course.
+We have not used C++ language code and Bash scripting obtained from another student, or any other unauthorized source, either modified or unmodified.
+If any C++ language code and Bash scripting or documentation of either were used in our program was obtained from another source, such as a textbook or course notes, that has been clearly noted with a proper citation in the comments of our program.
+*/
+
+// For Lab 9: Producer-Consumer ASCII video streaming using System V IPC.
+
+/** 
+ * Producer.cpp holds all the code necessary to create the producer program
+ * when compiled alongside shared.cpp
+ */
+
 #include "shared.h"
 #include <iostream>
 #include <fstream>
@@ -20,17 +41,27 @@ void waitForExit() {
     running = false; 
 }
 
+/**
+ * Producer's main role is to set up interprocess communication resources, read 
+ * the whole ASCII video file, store its contents and split them by frames, then feed
+ * the right order of frames to the consumer program via writing into shared memory. 
+ * Frames fed to the consumer program will depend on the ASCII video file the program
+ * has read, as well as the assigned frames per second.
+ */
 int main(int argc, char* argv[]) {
-    // 1. Argument validation
+    // Step 1. Argument validation
+
+    // Requires file name and FPS
     if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <video_file.txt> <FPS>\n";
+        std::cerr << "Usage: ./" << argv[0] << " <video_file.txt> <FPS>\n";
         return 1;
     }
 
     std::string filename = argv[1];
     int fps = std::stoi(argv[2]);
 
-    // 2. Open ASCII video file
+    // Step 2. Open ASCII video file, if available
+
     // Ref: https://en.cppreference.com/w/cpp/io/basic_ifstream
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -38,11 +69,12 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    // Read whole file into a string buffer
+    // This reads the whole file into a string buffer
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    file.close();
+    file.close(); // File is done being read, "video" information has been gathered.
 
-    // 3. Parse frames based on the ESC 'c' sequence (\033c)
+    // Step 3. Parse frames based on the ESC 'c' sequence (\033c)
+
     std::vector<std::string> frames;
     std::string delim = "\033c"; 
     size_t start = content.find(delim);
@@ -54,7 +86,8 @@ int main(int argc, char* argv[]) {
         start = end;
     }
 
-    // 4. Connect to IPC Resources
+    // Step 4. Create and connect to IPC Resources
+
     // Logic defined in shared.cpp using semget() and shmget()
     int semId = getSemaphores();
     int shmId = getSharedMemory();
@@ -65,18 +98,21 @@ int main(int argc, char* argv[]) {
     SharedData* shmPtr = attachSharedMemory(shmId);
     if (shmPtr == nullptr) return 1;
 
-    // 5. Launch exit listener thread
+    // Step 5. Launch exit listener thread
+
     std::thread inputThread(waitForExit);
 
     int currentFrameIndex = 0;
     int sleep_ms = 1000 / fps; 
 
-    // 6. Production Loop
+    // Step 6. Start the production loop
+
     while (running) {
         const std::string& frame = frames[currentFrameIndex];
 
         // LOCK: Protect shared memory from simultaneous access
         // Ref: https://man7.org/linux/man-pages/man2/semop.2.html
+        // Consumer.out can't read/edit by this point
         semLock(semId);
         
         shmPtr->totalFrames = (int)frames.size();
@@ -92,10 +128,12 @@ int main(int argc, char* argv[]) {
         shmPtr->frame[copyLen] = '\0'; 
         
         // UNLOCK: Allow the consumer to access the data
+        // Consumer.out can read/edit by this point
         semUnlock(semId);
 
         // SIGNAL: Wake up any consumers waiting for a new frame
         // Ref: https://man7.org/linux/man-pages/man2/semctl.2.html (SETVAL)
+        // Consumer.out is now awake
         semSignalNewFrame(semId);
 
         // Precision sleeping that respects the 'running' flag
@@ -110,7 +148,8 @@ int main(int argc, char* argv[]) {
         currentFrameIndex = (currentFrameIndex + 1) % frames.size();
     }
 
-    // 7. Teardown
+    // Step 7. Teardown/Memory clean up
+    
     inputThread.join();
     detachSharedMemory(shmPtr);
     removeSharedMemory(shmId); 

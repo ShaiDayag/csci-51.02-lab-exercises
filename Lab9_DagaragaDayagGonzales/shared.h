@@ -1,13 +1,32 @@
-// shared.h — Common definitions for producer and consumer.
-// Lab 9: Producer-Consumer ASCII video streaming using System V IPC.
- 
+/*
+Pete Justin Dagaraga (231874)
+Shaan Graal Dayag (231928)
+Robynne Alexa Gonzales (232944)
+
+April 27, 2026
+*/
+
+/*
+We have not discussed the C++ language code and Bash scripting in our program with anyone other than our instructor or the teaching assistants assigned to this course.
+We have not used C++ language code and Bash scripting obtained from another student, or any other unauthorized source, either modified or unmodified.
+If any C++ language code and Bash scripting or documentation of either were used in our program was obtained from another source, such as a textbook or course notes, that has been clearly noted with a proper citation in the comments of our program.
+*/
+
+// For Lab 9: Producer-Consumer ASCII video streaming using System V IPC.
+
+/**
+ * shared.h serves as the header file for shared.cpp.
+ * Its contents hold the common definitions for both producer and consumer
+ * programs, in both constants and functions.
+ */
+
 #ifndef SHARED_H
 #define SHARED_H
  
 /**
  * System V IPC Headers
- * Reference for types: https://man7.org/linux/man-pages/man7/inode.7.html
- * Reference for IPC: https://man7.org/linux/man-pages/man7/sysvipc.7.html
+ * Reference for types: https://man7.org/linux/man-pages/man7/inode.7.html !!!(can argue not to have this a source considering shm_sample.cpp and sem_sample.cpp)
+ * Reference for IPC: https://man7.org/linux/man-pages/man7/sysvipc.7.html !!!(can argue not to have this a source considering shm_sample.cpp and sem_sample.cpp)
  */
 #include <sys/types.h> // Definitions for key_t and size_t
 #include <sys/ipc.h>   // Common IPC flags (IPC_CREAT, IPC_RMID)
@@ -42,23 +61,23 @@ struct SharedData {
     char frame[MAX_FRAME_SIZE]; // Buffer for raw ASCII frame data.
 };
  
-// IPC Setup Functions
+// IPC Setup Functions --------------------------------------------------
  
 /**
  * getSemaphores(): Creates or accesses the semaphore set.
- * Ref: https://man7.org/linux/man-pages/man2/semget.2.html
+ * Ref: https://man7.org/linux/man-pages/man2/semget.2.html !!!(arguably not needed via slides?)
  */
 int getSemaphores();
  
 /**
  * getSharedMemory(): Creates or accesses the shared memory segment.
- * Ref: https://man7.org/linux/man-pages/man2/shmget.2.html
+ * Ref: https://man7.org/linux/man-pages/man2/shmget.2.html !!!(arguably not needed via slides?)
  */
 int getSharedMemory();
  
 /**
  * attachSharedMemory(): Maps the shared segment into the process address space.
- * Ref: https://man7.org/linux/man-pages/man2/shmat.2.html
+ * Ref: https://man7.org/linux/man-pages/man2/shmat.2.html !!!(arguably not needed via slides?)
  */
 SharedData* attachSharedMemory(int shmId);
  
@@ -68,7 +87,7 @@ SharedData* attachSharedMemory(int shmId);
  */
 int detachSharedMemory(SharedData* ptr);
  
-// --- IPC Teardown (Cleanup) ---
+// IPC Teardown (Cleanup) -----------------------------------------------
  
 /**
  * removeSharedMemory(): Marks the segment to be destroyed.
@@ -82,7 +101,7 @@ int removeSharedMemory(int shmId);
  */
 int removeSemaphores(int semId);
  
-// --- Synchronization Helpers ---
+// Synchronization Helpers ----------------------------------------------
  
 /**
  * semLock/semUnlock: Implementation of Mutex logic using semop().
@@ -91,7 +110,7 @@ int removeSemaphores(int semId);
 void semLock(int semId);
 void semUnlock(int semId);
  
-// Signaling Logic
+// Signaling Logic ------------------------------------------------------
  
 /**
  * semSignalNewFrame: Uses semctl SETVAL to notify the consumer.

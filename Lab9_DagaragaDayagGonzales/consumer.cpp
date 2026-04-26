@@ -1,3 +1,24 @@
+/*
+Pete Justin Dagaraga (231874)
+Shaan Graal Dayag (231928)
+Robynne Alexa Gonzales (232944)
+
+April 27, 2026
+*/
+
+/*
+We have not discussed the C++ language code and Bash scripting in our program with anyone other than our instructor or the teaching assistants assigned to this course.
+We have not used C++ language code and Bash scripting obtained from another student, or any other unauthorized source, either modified or unmodified.
+If any C++ language code and Bash scripting or documentation of either were used in our program was obtained from another source, such as a textbook or course notes, that has been clearly noted with a proper citation in the comments of our program.
+*/
+
+// For Lab 9: Producer-Consumer ASCII video streaming using System V IPC.
+
+/** 
+ * Consumer.cpp holds all the code necessary to create the consumer program
+ * when compiled alongside shared.cpp
+ */
+
 #include "shared.h"
 #include <iostream>
 #include <thread>
@@ -20,17 +41,30 @@ void waitForExit() {
     std::exit(0); // Ref: https://en.cppreference.com/w/cpp/utility/program/exit
 }
 
+/**
+ * Consumer.out's main role is to connect to the generated interprocess communication resources,
+ * then wait for producer to first send information towards the shared memory. Once that occurs,
+ * it then displays the information (the scene of the ASCII video) on the terminal that is 
+ * running the consumer program. It will continue looping through the video until an interruption 
+ * happens via pressing Enter or some other error. Frames per second will depend on what is inputted, 
+ * and can be greater/lesser than the frames per second assigned to the producer program.
+ */
 int main(int argc, char* argv[]) {
+    // Step 1. Argument validation
+
+    // Requires FPS
     if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <FPS (0 for sync)>\n";
+        std::cerr << "Usage: ./" << argv[0] << " <FPS (0 for sync)>\n";
         return 1;
     }
 
     int fps = std::stoi(argv[1]);
     if (fps < 0) fps = 0; 
 
-    // link to existing IPC (initialized by Producer)
-    // Ref: shared.cpp/shared.h
+    // Step 2. Link to existing IPC Resources (ought to be initialized by Producer first)
+    // Refer to shared.cpp/shared.h for logic
+
+    // Semaphore set and Shared Memory segment linked here.
     int semId = getSemaphores();
     int shmId = getSharedMemory();
     if (semId == -1 || shmId == -1) {
@@ -38,10 +72,13 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    // Shared Memory segment connected to local address space.
+    // SharedData will be sent here for consumer to output.
     shmPtr = attachSharedMemory(shmId);
     if (shmPtr == nullptr) return 1;
 
-    // Start exit monitor
+    // Step 3. Start monitoring for exit
+    
     std::thread inputThread(waitForExit);
 
     int lastSeqNum = 0;
@@ -49,7 +86,8 @@ int main(int argc, char* argv[]) {
     int skippedFrames = 0;
     int sleep_ms = fps > 0 ? (1000 / fps) : 0;
 
-    // Consumption Loop
+    // Step 4. Start the consumption loop
+
     while (running) {
         if (fps == 0) {
             // Wait for Producer to signal a new frame via semop()
@@ -63,6 +101,7 @@ int main(int argc, char* argv[]) {
         if (!running) break;
 
         // LOCK: Secure memory while we read the frame and metadata
+        // Producer.out can't read/edit by this point
         semLock(semId);
         
         int seq = shmPtr->sequenceNumber;
@@ -71,6 +110,7 @@ int main(int argc, char* argv[]) {
         std::string frameStr(shmPtr->frame, shmPtr->frameLength);
         
         // UNLOCK: Release memory for the next Producer write
+        // Producer.out can read/edit by this point
         semUnlock(semId);
 
         // Skip Calculation (Bonus Feature)
@@ -96,6 +136,8 @@ int main(int argc, char* argv[]) {
         lastSeqNum = seq;
         lastFrameIdx = current;
     }
+
+    // Step 5. Thread linking
 
     inputThread.join();
     return 0;
