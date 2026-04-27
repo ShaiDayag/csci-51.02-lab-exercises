@@ -28,7 +28,8 @@ If any C++ language code and Bash scripting or documentation of either were used
 #include <chrono>
 #include <cstring>
 #include <atomic> // Ref: https://en.cppreference.com/w/cpp/atomic/atomic
-
+#include <stdexcept> // Ref: https://en.cppreference.com/w/cpp/error/invalid_argument
+                     // Ref: https://en.cppreference.com/w/cpp/error/out_of_range
 // Atomic flag for thread-safe signaling between the input thread and main loop
 std::atomic<bool> running(true);
 
@@ -58,7 +59,29 @@ int main(int argc, char* argv[]) {
     }
 
     std::string filename = argv[1];
-    int fps = std::stoi(argv[2]);
+    // int fps = std::stoi(argv[2]);
+    int fps;
+
+    // Wrapped stoi in try-catch to handle non-numeric or out-of-range FPS input
+    // Ref: https://en.cppreference.com/w/cpp/string/basic_string/stoi
+    // Ref: https://en.cppreference.com/w/cpp/error/invalid_argument
+    // Ref: https://en.cppreference.com/w/cpp/error/out_of_range
+    try {
+        fps = std::stoi(argv[2]);
+    } catch (const std::invalid_argument&) {
+        std::cerr << "Error: FPS must be a valid integer. Got: " << argv[2] << "\n";
+        return 1;
+    } catch (const std::out_of_range&) {
+        std::cerr << "Error: FPS value is out of range: " << argv[2] << "\n";
+        return 1;
+    }
+
+    // Ref (division by zero / UB): https://en.cppreference.com/w/cpp/language/operator_arithmetic
+    // Ref (signed overflow / UB): https://en.cppreference.com/w/cpp/language/ub
+    if (fps <= 0) {
+        std::cerr << "Error: FPS must be a positive integer (greater than 0). Got: " << fps << "\n";
+        return 1;
+    }
 
     // Step 2. Open ASCII video file, if available
 
@@ -85,6 +108,17 @@ int main(int argc, char* argv[]) {
         frames.push_back(content.substr(start, end - start));
         start = end;
     }
+
+    // Prevent empty frames vector or if file exists but contains no valid ESC-C delimited frames
+    // Ref: https://en.cppreference.com/w/cpp/container/vector/operator_at
+    if (frames.empty()) {
+        std::cerr << "Error: No frames found in \"" << filename << "\". "
+                  << "Ensure the file uses the \\033c frame delimiter format.\n";
+        return 1;
+    }
+
+    std::cout << "Loaded " << frames.size() << " frames from \"" << filename << "\" at " << fps << " FPS.\n";
+    std::cout << "Press Enter to stop.\n";
 
     // Step 4. Create and connect to IPC Resources
 
@@ -118,7 +152,12 @@ int main(int argc, char* argv[]) {
         shmPtr->totalFrames = (int)frames.size();
         shmPtr->currentFrame = currentFrameIndex + 1;
         shmPtr->producerFPS = fps;
-        shmPtr->sequenceNumber++; 
+        shmPtr->sequenceNumber++;
+        
+        // Warning for when frame data exceeds MAX_FRAME_SIZE
+        if ((int)frame.length() >= MAX_FRAME_SIZE) {
+            std::cerr << "Warning: Frame " << (currentFrameIndex + 1) << " exceeds MAX_FRAME_SIZE (" << MAX_FRAME_SIZE << " bytes) " << "and will be truncated. Consider increasing MAX_FRAME_SIZE in shared.h.\n";
+        }
         
         // Copy the raw ASCII data into the shared buffer
         // Ref: https://man7.org/linux/man-pages/man3/memcpy.3.html
