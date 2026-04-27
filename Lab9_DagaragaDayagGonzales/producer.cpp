@@ -12,13 +12,6 @@ We have not used C++ language code and Bash scripting obtained from another stud
 If any C++ language code and Bash scripting or documentation of either were used in our program was obtained from another source, such as a textbook or course notes, that has been clearly noted with a proper citation in the comments of our program.
 */
 
-// For Lab 9: Producer-Consumer ASCII video streaming using System V IPC.
-
-/** 
- * Producer.cpp holds all the code necessary to create the producer program
- * when compiled alongside shared.cpp
- */
-
 #include "shared.h"
 #include <iostream>
 #include <fstream>
@@ -34,25 +27,14 @@ If any C++ language code and Bash scripting or documentation of either were used
 // Atomic flag for thread-safe signaling between the input thread and main loop
 std::atomic<bool> running(true);
 
-/**
- * Background thread function to monitor for the Enter key.
- * This prevents the program from being stuck in a sleep loop.
- */
+// Background thread function to monitor for the Enter key. Prevents being stuck in a sleep loop.
+
 void waitForExit() {
     std::cin.get(); 
     running = false; 
 }
 
-/**
- * Producer's main role is to set up interprocess communication resources, read 
- * the whole ASCII video file, store its contents and split them by frames, then feed
- * the right order of frames to the consumer program via writing into shared memory. 
- * Frames fed to the consumer program will depend on the ASCII video file the program
- * has read, as well as the assigned frames per second.
- */
 int main(int argc, char* argv[]) {
-    // Step 1. Argument validation
-
     // Requires file name and FPS
     if (argc != 3) {
         std::cerr << "Usage: ./" << argv[0] << " <video_file.txt> <FPS>\n";
@@ -83,8 +65,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Step 2. Open ASCII video file, if available
-
+    // Open ASCII video file
     // Ref: https://en.cppreference.com/w/cpp/io/basic_ifstream
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -94,9 +75,9 @@ int main(int argc, char* argv[]) {
     
     // This reads the whole file into a string buffer
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    file.close(); // File is done being read, "video" information has been gathered.
+    file.close(); // File is done being read. "video" information gathered.
 
-    // Step 3. Parse frames based on the ESC 'c' sequence (\033c)
+    // Parse frames based on the ESC 'c' sequence (\033c)
 
     std::vector<std::string> frames;
     std::string delim = "\033c"; 
@@ -120,8 +101,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Loaded " << frames.size() << " frames from \"" << filename << "\" at " << fps << " FPS.\n";
     std::cout << "Press Enter to stop.\n";
 
-    // Step 4. Create and connect to IPC Resources
-
+    // Create and connect to IPC Resources
     // Logic defined in shared.cpp using semget() and shmget()
     int semId = getSemaphores();
     int shmId = getSharedMemory();
@@ -132,14 +112,14 @@ int main(int argc, char* argv[]) {
     SharedData* shmPtr = attachSharedMemory(shmId);
     if (shmPtr == nullptr) return 1;
 
-    // Step 5. Launch exit listener thread
+    // Launch exit listener thread
 
     std::thread inputThread(waitForExit);
 
     int currentFrameIndex = 0;
     int sleep_ms = 1000 / fps; 
 
-    // Step 6. Start the production loop
+    // production loop
 
     while (running) {
         const std::string& frame = frames[currentFrameIndex];
@@ -159,7 +139,7 @@ int main(int argc, char* argv[]) {
             std::cerr << "Warning: Frame " << (currentFrameIndex + 1) << " exceeds MAX_FRAME_SIZE (" << MAX_FRAME_SIZE << " bytes) " << "and will be truncated. Consider increasing MAX_FRAME_SIZE in shared.h.\n";
         }
         
-        // Copy the raw ASCII data into the shared buffer
+        // Copy the raw ASCII into the shared buffer
         // Ref: https://man7.org/linux/man-pages/man3/memcpy.3.html
         int copyLen = frame.length() < MAX_FRAME_SIZE - 1 ? frame.length() : MAX_FRAME_SIZE - 1;
         shmPtr->frameLength = copyLen;
@@ -187,8 +167,7 @@ int main(int argc, char* argv[]) {
         currentFrameIndex = (currentFrameIndex + 1) % frames.size();
     }
 
-    // Step 7. Teardown/Memory clean up
-    
+    // Memory clean up
     inputThread.join();
     detachSharedMemory(shmPtr);
     removeSharedMemory(shmId); 
