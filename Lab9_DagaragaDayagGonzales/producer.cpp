@@ -30,6 +30,7 @@ If any C++ language code and Bash scripting or documentation of either were used
 #include <atomic> // Ref: https://en.cppreference.com/w/cpp/atomic/atomic
 #include <stdexcept> // Ref: https://en.cppreference.com/w/cpp/error/invalid_argument
                      // Ref: https://en.cppreference.com/w/cpp/error/out_of_range
+
 // Atomic flag for thread-safe signaling between the input thread and main loop
 std::atomic<bool> running(true);
 
@@ -59,7 +60,6 @@ int main(int argc, char* argv[]) {
     }
 
     std::string filename = argv[1];
-    // int fps = std::stoi(argv[2]);
     int fps;
 
     // Wrapped stoi in try-catch to handle non-numeric or out-of-range FPS input

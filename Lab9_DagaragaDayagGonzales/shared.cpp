@@ -67,6 +67,10 @@ int getSemaphores() {
         if (semctl(semId, SEM_MUTEX,     SETVAL, arg) == -1 ||
             semctl(semId, SEM_NEW_FRAME, SETVAL, arg) == -1) {
             perror("semctl SETVAL");
+
+            // Cleans up the semaphore set created if initialization fails
+            // Reference: https://man7.org/linux/man-pages/man2/semctl.2.html
+            semctl(semId, 0, IPC_RMID);
             return -1;
         }
     } else if (errno == EEXIST) {
@@ -141,6 +145,8 @@ int detachSharedMemory(SharedData* ptr) {
  * ID, freeing space as it is no longer being used. 
  */
 int removeSharedMemory(int shmId) {
+    // Prevent invalid shmId
+    if (shmId == -1) return -1;
     /**
      * shmctl(): Shared memory control (IPC_RMID to remove)
      * Reference: https://man7.org/linux/man-pages/man2/shmctl.2.html
@@ -155,6 +161,8 @@ int removeSharedMemory(int shmId) {
  * terms, this is releasing the semaphores that are no longer of use. 
  */
 int removeSemaphores(int semId) {
+    // Prevent invalid semId
+    if (semId == -1) return -1;
     /**
      * semctl(): Semaphore control (IPC_RMID to remove)
      * Reference: https://man7.org/linux/man-pages/man2/semctl.2.html
@@ -245,5 +253,13 @@ int semWaitNewFrame(int semId) {
                                     // result until semaphore value is brought back up again 
 
     op.sem_flg = 0;
+
+    // Loop on semop in case of EINTR (interrupted by signal)
+    // Exit on EIDRM (semaphore set removed) or EINVAL (invalid semaphore set)
+    // Ref: https://man7.org/linux/man-pages/man2/semop.2.html
+    while (semop(semId, &op, 1) == -1) {
+        if (errno == EINTR) continue; // Retry on signal interruption
+        return -1;                    // EIDRM, EINVAL, or other fatal IPC error → caller exits
+    }
     return semop(semId, &op, 1);
 }

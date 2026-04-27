@@ -26,6 +26,8 @@ If any C++ language code and Bash scripting or documentation of either were used
 #include <atomic>
 #include <cstdlib>
 #include <string>
+#include <stdexcept> // Ref: https://en.cppreference.com/w/cpp/error/invalid_argument
+                     // Ref: https://en.cppreference.com/w/cpp/error/out_of_range
 
 std::atomic<bool> running(true);
 SharedData* shmPtr = nullptr;
@@ -58,8 +60,28 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    int fps = std::stoi(argv[1]);
-    if (fps < 0) fps = 0; 
+    int fps;
+
+    // Wrapped stoi in try-catch to handle non-numeric or out-of-range FPS input
+    // Ref: https://en.cppreference.com/w/cpp/string/basic_string/stoi
+    // Ref: https://en.cppreference.com/w/cpp/error/invalid_argument
+    // Ref: https://en.cppreference.com/w/cpp/error/out_of_range
+    try {
+        fps = std::stoi(argv[2]);
+    } catch (const std::invalid_argument&) {
+        std::cerr << "Error: FPS must be a valid integer. Got: " << argv[2] << "\n";
+        return 1;
+    } catch (const std::out_of_range&) {
+        std::cerr << "Error: FPS value is out of range: " << argv[2] << "\n";
+        return 1;
+    }
+
+    // Ref (division by zero / UB): https://en.cppreference.com/w/cpp/language/operator_arithmetic
+    // Ref (signed overflow / UB): https://en.cppreference.com/w/cpp/language/ub
+    if (fps < 0) {
+        std::cerr << "Error: FPS must be 0 (sync with producer) or a positive integer. Got: " << fps << "\n";
+        return 1;
+    }
 
     // Step 2. Link to existing IPC Resources (ought to be initialized by Producer first)
     // Refer to shared.cpp/shared.h for logic
@@ -113,10 +135,14 @@ int main(int argc, char* argv[]) {
         // Producer.out can read/edit by this point
         semUnlock(semId);
 
+        if (total == 0 || current == 0) {
+            continue;
+        }
+
         // Skip Calculation (Bonus Feature)
         if (lastSeqNum != 0) {
             // Reset skip count if the video loops
-            if (current < lastFrameIdx || current == 1) {
+            if (current < lastFrameIdx) {
                 skippedFrames = 0; 
             }
             // If sequence jumped, calculate how many frames we missed
@@ -131,6 +157,16 @@ int main(int argc, char* argv[]) {
         
         std::cout << "\nCurrent frame: " << current << " / " << total 
                   << " (" << skippedFrames << " frames skipped)\n";
+        
+        int producerFPS = shmPtr->producerFPS;
+
+        // Displays fps info for both producer and consumer
+        if (fps == 0) {
+            std::cout << "[Sync mode | Producer FPS: " << producerFPS << "]\n";
+        } else {
+            std::cout << "[Consumer FPS: " << fps << " | Producer FPS: " << producerFPS << "]\n";
+        }
+
         std::cout.flush(); 
 
         lastSeqNum = seq;
