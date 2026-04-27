@@ -67,12 +67,12 @@ int main(int argc, char* argv[]) {
     // Ref: https://en.cppreference.com/w/cpp/error/invalid_argument
     // Ref: https://en.cppreference.com/w/cpp/error/out_of_range
     try {
-        fps = std::stoi(argv[2]);
+        fps = std::stoi(argv[1]);
     } catch (const std::invalid_argument&) {
-        std::cerr << "Error: FPS must be a valid integer. Got: " << argv[2] << "\n";
+        std::cerr << "Error: FPS must be a valid integer. Got: " << argv[1] << "\n";
         return 1;
     } catch (const std::out_of_range&) {
-        std::cerr << "Error: FPS value is out of range: " << argv[2] << "\n";
+        std::cerr << "Error: FPS value is out of range: " << argv[1] << "\n";
         return 1;
     }
 
@@ -129,13 +129,21 @@ int main(int argc, char* argv[]) {
         int seq = shmPtr->sequenceNumber;
         int total = shmPtr->totalFrames;
         int current = shmPtr->currentFrame;
-        std::string frameStr(shmPtr->frame, shmPtr->frameLength);
+        int frameLen = shmPtr->frameLength;
+
+        std::string frameStr;
+
+        // Validate framelength before constructing string
+        // Ref: https://man7.org/linux/man-pages/man2/shmget.2.html
+        if (frameLen > 0 && frameLen < MAX_FRAME_SIZE) {
+            frameStr = std::string(shmPtr->frame, frameLen);
+        }
         
         // UNLOCK: Release memory for the next Producer write
         // Producer.out can read/edit by this point
         semUnlock(semId);
 
-        if (total == 0 || current == 0) {
+        if (total == 0 || current == 0 || frameStr.empty()) {
             continue;
         }
 
